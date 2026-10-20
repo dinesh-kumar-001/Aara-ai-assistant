@@ -30,9 +30,9 @@ router.get('/status', async (req, res) => {
       isRealAI: aiHealth.isRealAI,
       status: aiHealth.status, // 'connected' | 'demo_mode' | 'error'
       provider: aiHealth.provider,
-      model: aiHealth.model || config.aiModel || 'gemini-1.5-flash',
+      model: aiHealth.model || (config.aiProvider === 'groq' ? config.groqModel : 'gemini-3.8-flash'),
       configuredProvider: config.aiProvider,
-      hasApiKey: Boolean(config.aiApiKey),
+      hasApiKey: Boolean(config.aiProvider === 'groq' ? (config.groqApiKey || config.aiApiKey) : (config.geminiApiKey || config.aiApiKey)),
       message: aiHealth.message,
       isDemoMode: !aiHealth.isRealAI,
       envLocation: config.envFilePath ? 'Detected' : 'Default'

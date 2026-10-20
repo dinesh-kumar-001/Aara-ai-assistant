@@ -76,9 +76,9 @@ export function ChatWindow({
             Dedicated Personal AI Assistant for <strong>Mr. Dinesh Kumar</strong>
           </div>
 
-          <p className="text-muted small" style={{ maxWidth: 540, margin: '0 auto 1.5rem auto' }}>
+          {/* <p className="text-muted small" style={{ maxWidth: 540, margin: '0 auto 1.5rem auto' }}>
             Speak naturally with your microphone or type any question below. Aara speaks back with a sweet, natural female voice and guides you through coding, interviews, learning, and daily tasks.
-          </p>
+          </p> */}
 
           {/* Quick Starter Cards */}
           <div className="mode-chip-grid">

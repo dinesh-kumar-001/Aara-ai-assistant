@@ -72,9 +72,8 @@ export function Sidebar({
                 return (
                   <div
                     key={convo.id}
-                    className={`d-flex align-items-center justify-content-between p-2 rounded-3 text-decoration-none cursor-pointer ${
-                      isActive ? 'bg-primary-subtle text-primary fw-semibold' : 'text-secondary hover-bg'
-                    }`}
+                    className={`d-flex align-items-center justify-content-between p-2 rounded-3 text-decoration-none cursor-pointer ${isActive ? 'bg-primary-subtle text-primary fw-semibold' : 'text-secondary hover-bg'
+                      }`}
                     style={{
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
@@ -135,7 +134,7 @@ export function Sidebar({
                 Mr. Dinesh Kumar
               </div>
               <div className="text-muted" style={{ fontSize: '0.7rem' }}>
-                Personal AI System • ₹0 Budget
+                Personal AI System
               </div>
             </div>
           </div>

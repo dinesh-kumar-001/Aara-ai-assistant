@@ -4,25 +4,32 @@ import config from './env.js';
 let isConnected = false;
 
 export const connectDB = async () => {
-  // If no Mongo URI provided or explicit zero-cost mode
   if (!config.mongoUri) {
     console.log('ℹ️  MongoDB URI not configured. Running in Zero-Cost Local Persistence Mode.');
     isConnected = false;
     return false;
   }
 
+  // Check if user forgot to replace the placeholder
+  if (config.mongoUri.includes('<db_password>') || config.mongoUri.includes('<password>')) {
+    console.warn('⚠️  Notice: Your MONGODB_URI in backend/.env contains "<db_password>".');
+    console.warn('👉 Please replace "<db_password>" with your real MongoDB Atlas database user password.');
+  }
+
   try {
-    console.log('🔄 Attempting MongoDB connection...');
+    const isAtlas = config.mongoUri.includes('mongodb+srv://');
+    console.log(`🔄 Attempting MongoDB connection (${isAtlas ? 'MongoDB Atlas Cloud' : 'Local MongoDB'})...`);
+
     const conn = await mongoose.connect(config.mongoUri, {
-      serverSelectionTimeoutMS: 3000 // Fast fail so startup isn't blocked
+      serverSelectionTimeoutMS: 8000 // Give Atlas sufficient time for DNS SRV & TLS
     });
     isConnected = true;
     console.log(`✅ MongoDB Connected successfully: ${conn.connection.host}`);
     return true;
   } catch (err) {
     isConnected = false;
-    console.warn(`⚠️  MongoDB connection failed (${err.message}).`);
-    console.log('🚀 Aara is activating Zero-Cost Local File Persistence Mode. Full functionality remains active!');
+    console.warn(`⚠️  MongoDB connection failed: ${err.message}`);
+    console.log('🚀 Aara is activating Zero-Cost Local File Persistence Mode. Full chat functionality remains active!');
     return false;
   }
 };
@@ -34,3 +41,5 @@ export const getDbStatus = () => ({
   type: isConnected ? 'MongoDB' : 'Local File Persistence (Zero-Cost)',
   host: isConnected ? mongoose.connection?.host : 'Local JSON Store'
 });
+
+export default { connectDB, isMongoConnected, getDbStatus };

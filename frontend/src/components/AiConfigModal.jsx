@@ -6,12 +6,12 @@ export function AiConfigModal({ isOpen, onClose, systemStatus }) {
   if (!isOpen) return null;
 
   const envSample = `# backend/.env
+AI_PROVIDER=groq
+GROQ_API_KEY=your_groq_api_key_here
+GROQ_MODEL=openai/gpt-oss-120b
 PORT=5000
 CLIENT_ORIGIN=http://localhost:5173
-MONGODB_URI=mongodb://localhost:27017/aara_assistant
-AI_PROVIDER=gemini
-AI_API_KEY=your_gemini_api_key_here
-AI_MODEL=gemini-1.5-flash`;
+MONGODB_URI=mongodb://localhost:27017/aara_assistant`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(envSample).then(() => {
@@ -33,7 +33,7 @@ AI_MODEL=gemini-1.5-flash`;
             </div>
             <div>
               <h5 className="mb-0 fw-bold">AI Provider Configuration</h5>
-              <small className="text-muted">Connect Aara to Genuine Gemini LLM</small>
+              <small className="text-muted">Connect Aara to Ultra-Fast Groq LLM</small>
             </div>
           </div>
           <button className="btn-close btn-close-white" onClick={onClose} aria-label="Close"></button>
@@ -45,7 +45,9 @@ AI_MODEL=gemini-1.5-flash`;
             <div>
               <strong>Current Status:</strong>{' '}
               {systemStatus?.ai?.isRealAI ? (
-                <span className="text-success fw-bold">Connected to Real AI ({systemStatus?.ai?.provider})</span>
+                <span className="text-success fw-bold">
+                  Connected to Real AI ({systemStatus?.ai?.provider} - {systemStatus?.ai?.model})
+                </span>
               ) : (
                 <span className="text-warning fw-bold">Demo Mode (Real AI Disconnected)</span>
               )}
@@ -54,24 +56,24 @@ AI_MODEL=gemini-1.5-flash`;
           </div>
 
           <div>
-            <h6 className="fw-bold text-light mb-2">How to Connect Free Gemini API:</h6>
+            <h6 className="fw-bold text-light mb-2">How to Connect Free Groq API (Recommended):</h6>
             <ol className="small text-secondary ps-3 mb-3">
               <li className="mb-1">
-                Visit Google AI Studio:{' '}
+                Open Groq Cloud Console:{' '}
                 <a
-                  href="https://aistudio.google.com"
+                  href="https://console.groq.com/keys"
                   target="_blank"
                   rel="noreferrer"
                   className="text-info text-decoration-none"
                 >
-                  https://aistudio.google.com <i className="bi bi-box-arrow-up-right"></i>
+                  https://console.groq.com/keys <i className="bi bi-box-arrow-up-right"></i>
                 </a>
               </li>
-              <li className="mb-1">Click <strong>"Get API key"</strong> (free tier, zero cost).</li>
+              <li className="mb-1">Sign in with Google or GitHub and click <strong>"Create API Key"</strong>.</li>
               <li className="mb-1">
-                Open <code>backend/.env</code> in your project and paste your key.
+                Copy the key and paste it into <code>backend/.env</code> as <code>GROQ_API_KEY</code>.
               </li>
-              <li>Restart the backend server. Aara will automatically verify and connect!</li>
+              <li>Restart the backend server. Aara will automatically connect to Groq!</li>
             </ol>
           </div>
 
