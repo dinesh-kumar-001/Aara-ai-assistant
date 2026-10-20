@@ -202,18 +202,9 @@ All acceptance tests have been executed against the running application:
 
 ---
 
-## 📄 8. Resume Description
-
-> **Aara — Personal AI Voice & Chat Assistant (MERN Stack)**  
-> *React 18, Vite, Node.js, Express.js, MongoDB, Mongoose, Google Gemini SDK, Web Speech API*  
-> - Engineered a personal AI assistant for Mr. Dinesh Kumar featuring multi-modal voice interaction (Speech Recognition STT + natural female voice synthesis TTS) and zero mandatory cloud costs.
-> - Integrated Google Gemini API using the official `@google/generative-ai` SDK with conversational context pruning, multi-mode system instructions, and graceful failover.
-> - Architected a resilient dual-tier persistence layer that automatically connects to MongoDB/Mongoose or seamlessly falls back to a transactional JSON store with 100% uptime.
-> - Implemented 4 dynamic operational modes (Coding Mentor, Interview Coach, English Practice, Personal Assistant) with provenance badges distinguishing live LLM completions from offline demo mode.
-
----
 
 ## 👤 Author & Ownership
 - **Owner & Beneficiary:** Mr. Dinesh Kumar
 - **Assistant Persona:** Aara ("Your personal assistant, always ready to help.")
-- **License:** MIT License
+- **License:** Copyright (c) 2026 Dinesh Kumar R.
+GitHub: https://github.com/dinesh-kumar-001
