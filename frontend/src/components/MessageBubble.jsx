@@ -170,11 +170,18 @@ export function MessageBubble({ message, onSpeak, onStop, isSpeaking }) {
             <span>{formattedTime}</span>
 
             {!isUser && message.engine && (
-              <span className={`engine-badge ${message.engine.isFallback ? 'fallback' : ''}`}>
-                <i className={message.engine.isFallback ? 'bi bi-lightning-charge' : 'bi bi-cloud-check'}></i>
-                {message.engine.isFallback
-                  ? 'Local Zero-Cost Engine'
-                  : message.engine.provider || 'AI Powered'}
+              <span
+                className={`engine-badge ${message.engine.isRealAI ? 'real-ai' : 'demo-mode'}`}
+                style={
+                  message.engine.isRealAI
+                    ? { background: 'rgba(99, 102, 241, 0.2)', color: '#818cf8', borderColor: 'rgba(99, 102, 241, 0.4)' }
+                    : { background: 'rgba(234, 179, 8, 0.15)', color: '#facc15', borderColor: 'rgba(234, 179, 8, 0.3)' }
+                }
+              >
+                <i className={message.engine.isRealAI ? 'bi bi-stars' : 'bi bi-info-circle'}></i>
+                {message.engine.isRealAI
+                  ? `${message.engine.provider === 'gemini' ? 'Gemini 1.5' : message.engine.provider} (Live AI)`
+                  : 'Offline Demo Engine'}
               </span>
             )}
           </div>

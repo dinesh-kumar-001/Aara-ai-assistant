@@ -1,11 +1,17 @@
 import config from '../../config/env.js';
 import { generateLocalReply } from './localFallbackEngine.js';
-import { callGemini } from './geminiProvider.js';
+import { callGemini, pingGemini } from './geminiProvider.js';
 import { callGroq } from './groqProvider.js';
 import { callOpenAI } from './openAiProvider.js';
 import { AARA_CANONICAL_IDENTITY_REPLY } from './systemPrompts.js';
 
-// Check if message is directly asking for identity
+// Status tracking for provider connectivity
+let lastVerifiedProvider = null;
+let lastVerificationTime = null;
+let lastProviderError = null;
+let isRealAiVerified = false;
+
+// Check if message is strictly asking for identity
 function isStrictIdentityQuery(msg = '') {
   const norm = msg.toLowerCase().trim().replace(/[^\w\s]/gi, '');
   return (
@@ -17,13 +23,91 @@ function isStrictIdentityQuery(msg = '') {
   );
 }
 
+/**
+ * Verify whether configured provider is live and authenticated
+ * Never claims real AI is connected unless a real request succeeds.
+ */
+export async function verifyAiStatus() {
+  const provider = config.aiProvider;
+  const apiKey = config.aiApiKey;
+
+  if (!apiKey) {
+    isRealAiVerified = false;
+    lastProviderError = 'No API key configured in backend/.env';
+    return {
+      connected: false,
+      isRealAI: false,
+      status: 'demo_mode',
+      provider: 'demo',
+      model: 'local-demo',
+      message: 'Running in offline demo mode. Set AI_PROVIDER=gemini and AI_API_KEY in backend/.env to connect real AI.'
+    };
+  }
+
+  try {
+    if (provider === 'gemini') {
+      const ping = await pingGemini(apiKey, config.aiModel || 'gemini-1.5-flash');
+      if (ping.ok) {
+        isRealAiVerified = true;
+        lastVerifiedProvider = 'gemini';
+        lastVerificationTime = new Date().toISOString();
+        lastProviderError = null;
+        return {
+          connected: true,
+          isRealAI: true,
+          status: 'connected',
+          provider: 'gemini',
+          model: config.aiModel || 'gemini-1.5-flash',
+          message: 'Connected to Google Gemini API.'
+        };
+      } else {
+        isRealAiVerified = false;
+        lastProviderError = ping.error;
+        return {
+          connected: false,
+          isRealAI: false,
+          status: 'error',
+          provider: 'gemini',
+          model: config.aiModel || 'gemini-1.5-flash',
+          message: `Gemini verification failed: ${ping.error}`
+        };
+      }
+    }
+
+    // For other providers (Groq/OpenAI)
+    isRealAiVerified = Boolean(apiKey);
+    return {
+      connected: isRealAiVerified,
+      isRealAI: isRealAiVerified,
+      status: isRealAiVerified ? 'connected' : 'demo_mode',
+      provider,
+      model: config.aiModel || 'default',
+      message: isRealAiVerified ? `Provider ${provider} configured with API key.` : 'No API key configured.'
+    };
+  } catch (err) {
+    isRealAiVerified = false;
+    lastProviderError = err.message;
+    return {
+      connected: false,
+      isRealAI: false,
+      status: 'error',
+      provider,
+      message: `Provider error: ${err.message}`
+    };
+  }
+}
+
+/**
+ * Main entry point for generating assistant responses
+ */
 export async function getAssistantResponse({ message, mode = 'assistant', history = [] }) {
-  // If the user explicitly asks identity, we always provide the canonical response
+  // 1. Strict Identity Query check
   if (isStrictIdentityQuery(message)) {
     return {
       reply: `${AARA_CANONICAL_IDENTITY_REPLY}\n\nI'm ready in **${getModeDisplayName(mode)}** mode. How would you like to start?`,
       provider: 'canonical-identity',
       model: 'aara-core-persona',
+      isRealAI: true,
       isFallback: false
     };
   }
@@ -31,42 +115,41 @@ export async function getAssistantResponse({ message, mode = 'assistant', histor
   const provider = config.aiProvider;
   const apiKey = config.aiApiKey;
 
-  // If explicitly configured for local or missing key for cloud providers
-  if (provider === 'local' || (!apiKey && provider !== 'custom' && !config.aiBaseUrl)) {
+  // 2. If no API key configured or explicitly in demo mode
+  if (!apiKey || provider === 'demo' || provider === 'local') {
     const reply = generateLocalReply({ message, mode, history });
     return {
       reply,
-      provider: 'local-engine',
-      model: 'aara-offline-v1',
+      provider: 'demo',
+      model: 'offline-demo-v1',
+      isRealAI: false,
       isFallback: true,
-      note: 'Zero-Cost Local Knowledge Mode'
+      notice: 'Demo Mode: Real AI not connected. Add AI_API_KEY in backend/.env to enable live LLM answers.'
     };
   }
 
-  // Attempt external provider with automatic graceful fallback
+  // 3. Attempt genuine LLM call
   try {
+    let result;
+
     if (provider === 'gemini') {
-      return await callGemini({
+      result = await callGemini({
         apiKey,
         model: config.aiModel || 'gemini-1.5-flash',
         message,
         mode,
         history
       });
-    }
-
-    if (provider === 'groq') {
-      return await callGroq({
+    } else if (provider === 'groq') {
+      result = await callGroq({
         apiKey,
         model: config.aiModel || 'llama-3.3-70b-versatile',
         message,
         mode,
         history
       });
-    }
-
-    if (provider === 'openai' || provider === 'custom') {
-      return await callOpenAI({
+    } else if (provider === 'openai' || provider === 'custom') {
+      result = await callOpenAI({
         apiKey,
         baseUrl: config.aiBaseUrl,
         model: config.aiModel || 'gpt-4o-mini',
@@ -74,25 +157,41 @@ export async function getAssistantResponse({ message, mode = 'assistant', histor
         mode,
         history
       });
+    } else {
+      throw new Error(`Unsupported AI provider: ${provider}`);
     }
 
-    // Default to local if unknown provider
-    const reply = generateLocalReply({ message, mode, history });
+    // Mark as verified on successful response
+    isRealAiVerified = true;
+    lastVerifiedProvider = provider;
+    lastVerificationTime = new Date().toISOString();
+    lastProviderError = null;
+
     return {
-      reply,
-      provider: 'local-engine',
-      model: 'aara-offline-v1',
-      isFallback: true
+      reply: result.reply,
+      provider: result.provider,
+      model: result.model,
+      isRealAI: true,
+      isFallback: false
     };
   } catch (error) {
-    console.warn(`External AI provider '${provider}' error: ${error.message}. Switching to Zero-Cost Local Engine.`);
-    const reply = generateLocalReply({ message, mode, history });
+    console.error(`Error calling ${provider} AI model:`, error.message);
+    lastProviderError = error.message;
+
+    // Graceful fallback with clear explanation to user
+    const fallbackReply =
+      `⚠️ **[Real AI Request Error]**\n` +
+      `Failed to retrieve response from **${provider}**: ${error.message}\n\n` +
+      `---\n\n` +
+      generateLocalReply({ message, mode, history });
+
     return {
-      reply,
-      provider: 'local-fallback',
-      model: 'aara-offline-v1',
+      reply: fallbackReply,
+      provider: `${provider}-fallback`,
+      model: config.aiModel || 'fallback-v1',
+      isRealAI: false,
       isFallback: true,
-      fallbackReason: error.message
+      error: error.message
     };
   }
 }
@@ -111,5 +210,6 @@ function getModeDisplayName(mode) {
 }
 
 export default {
-  getAssistantResponse
+  getAssistantResponse,
+  verifyAiStatus
 };

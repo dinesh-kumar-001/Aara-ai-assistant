@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar.jsx';
 import ChatWindow from './components/ChatWindow.jsx';
 import ChatInput from './components/ChatInput.jsx';
 import VoiceSettingsModal from './components/VoiceSettingsModal.jsx';
+import AiConfigModal from './components/AiConfigModal.jsx';
 import { useSpeechRecognition } from './hooks/useSpeechRecognition.js';
 import { useSpeechSynthesis } from './hooks/useSpeechSynthesis.js';
 import { useChat } from './hooks/useChat.js';
@@ -35,6 +36,7 @@ export function App() {
 
   // UI Modals & Drawers
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const [isAiConfigModalOpen, setIsAiConfigModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Input state
@@ -186,6 +188,7 @@ export function App() {
           status={systemStatus}
           selectedVoice={selectedVoice}
           onOpenVoiceSettings={() => setIsVoiceModalOpen(true)}
+          onOpenConfigHelp={() => setIsAiConfigModalOpen(true)}
           theme={theme}
           onToggleTheme={toggleTheme}
           onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
@@ -238,6 +241,13 @@ export function App() {
         onToggleAutoSpeak={toggleAutoSpeak}
         onPreviewVoice={previewVoice}
         isSpeaking={isSpeaking}
+      />
+
+      {/* Real AI Provider Configuration Modal */}
+      <AiConfigModal
+        isOpen={isAiConfigModalOpen}
+        onClose={() => setIsAiConfigModalOpen(false)}
+        systemStatus={systemStatus}
       />
     </div>
   );

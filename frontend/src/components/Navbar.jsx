@@ -5,6 +5,7 @@ export function Navbar({
   status,
   selectedVoice,
   onOpenVoiceSettings,
+  onOpenConfigHelp,
   theme,
   onToggleTheme,
   onToggleSidebar
@@ -48,7 +49,11 @@ export function Navbar({
       </div>
 
       {/* Middle Status Badges */}
-      <StatusBadge status={status} selectedVoice={selectedVoice} />
+      <StatusBadge
+        status={status}
+        selectedVoice={selectedVoice}
+        onOpenConfigHelp={onOpenConfigHelp}
+      />
 
       {/* Right Controls */}
       <div className="d-flex align-items-center gap-2">

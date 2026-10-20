@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import config from '../config/env.js';
 import { getDbStatus } from '../config/db.js';
+import { verifyAiStatus } from '../services/ai/index.js';
 
 const router = Router();
 
-router.get('/status', (req, res) => {
+router.get('/status', async (req, res) => {
   const dbStatus = getDbStatus();
-  const hasKey = Boolean(config.aiApiKey);
+  const aiHealth = await verifyAiStatus();
 
   res.json({
     success: true,
@@ -15,7 +16,7 @@ router.get('/status', (req, res) => {
       tagline: 'Your personal assistant, always ready to help.',
       owner: 'Mr. Dinesh Kumar',
       personality: 'Friendly, polite, intelligent, supportive, and natural.',
-      version: '1.0.0'
+      version: '1.1.0'
     },
     database: {
       connected: dbStatus.connected,
@@ -25,13 +26,16 @@ router.get('/status', (req, res) => {
         : 'Running seamlessly in Zero-Cost Local Storage fallback mode'
     },
     ai: {
+      connected: aiHealth.connected,
+      isRealAI: aiHealth.isRealAI,
+      status: aiHealth.status, // 'connected' | 'demo_mode' | 'error'
+      provider: aiHealth.provider,
+      model: aiHealth.model || config.aiModel || 'gemini-1.5-flash',
       configuredProvider: config.aiProvider,
-      hasApiKey: hasKey,
-      model: config.aiModel || (config.aiProvider === 'local' ? 'aara-offline-v1' : 'default'),
-      isZeroCostMode: config.aiProvider === 'local' || !hasKey,
-      note: hasKey
-        ? `Cloud AI enabled via ${config.aiProvider}`
-        : 'Zero-Cost Local Fallback Engine active (No external API key needed)'
+      hasApiKey: Boolean(config.aiApiKey),
+      message: aiHealth.message,
+      isDemoMode: !aiHealth.isRealAI,
+      envLocation: config.envFilePath ? 'Detected' : 'Default'
     },
     modes: [
       {

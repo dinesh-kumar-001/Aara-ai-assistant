@@ -18,6 +18,7 @@ const MessageSchema = new mongoose.Schema({
   engine: {
     provider: { type: String, default: 'local' },
     model: { type: String, default: 'aara-local-v1' },
+    isRealAI: { type: Boolean, default: false },
     isFallback: { type: Boolean, default: true }
   },
   timestamp: {
